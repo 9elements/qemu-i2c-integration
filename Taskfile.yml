@@ -12,3 +12,31 @@ tasks:
     status:
       - test -f {{.QEMU_DIR}}/README.rst
       - test -f {{.BUILDROOT_DIR}}/README
+
+  build-qemu:
+    desc: Build QEMU (qemu-system-arm only)
+    dir: "{{.QEMU_DIR}}"
+    cmds:
+      - mkdir -p build
+      - |
+        cd build
+        ../configure --target-list=arm-softmmu
+      - make -C build -j$(nproc)
+    sources:
+      - "{{.QEMU_DIR}}/**/*.c"
+      - "{{.QEMU_DIR}}/**/*.h"
+    generates:
+      - "{{.QEMU_DIR}}/build/qemu-system-arm"
+    deps:
+      - init-submodules
+
+  clean-qemu:
+    desc: Clean QEMU build artifacts
+    dir: "{{.QEMU_DIR}}"
+    cmds:
+      - rm -rf build
+
+  clean:
+    desc: Clean all build artifacts
+    cmds:
+      - task: clean-qemu
