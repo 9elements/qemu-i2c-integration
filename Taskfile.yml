@@ -42,13 +42,36 @@ tasks:
     generates:
       - "{{.BUILDROOT_OUTPUT}}/images/zImage"
       - "{{.BUILDROOT_OUTPUT}}/images/rootfs.cpio"
-      - "{{.BUILDROOT_OUTPUT}}/images/aspeed-ast2600-evb.dtb"
+      - "{{.BUILDROOT_OUTPUT}}/images/aspeed-ast2600-evb-nmi.dtb"
     deps:
       - init-submodules
     preconditions:
       - test -d {{.BR2_EXTERNAL_PATH}}
       - test -f {{.BR2_EXTERNAL_PATH}}/external.desc
       - test -f {{.BR2_EXTERNAL_PATH}}/configs/{{.DEFCONFIG}}
+
+  run-qemu:
+    desc: Run QEMU with Buildroot images for AST2600 EVB
+    cmds:
+      - |
+        {{.QEMU_DIR}}/build/qemu-system-arm \
+          -M ast2600-evb \
+          -nographic \
+          -kernel {{.BUILDROOT_OUTPUT}}/images/zImage \
+          -initrd {{.BUILDROOT_OUTPUT}}/images/rootfs.cpio \
+          -dtb {{.BUILDROOT_OUTPUT}}/images/aspeed-ast2600-evb-nmi.dtb \
+          -chardev socket,path=vi2c_bus.sock,id=vi2c_bus1,server=on,wait=off \
+          -device chardev-i2c,bus=aspeed.i2c.bus.1,chardev=vi2c_bus1,address=0x20 \
+          -chardev socket,path=vi2c_bus.sock,id=vi2c_bus2,server=off \
+          -device chardev-i2c,bus=aspeed.i2c.bus.2,chardev=vi2c_bus2,address=0x10
+    deps:
+      - build-qemu
+      - build-buildroot
+    preconditions:
+      - test -f {{.QEMU_DIR}}/build/qemu-system-arm
+      - test -f {{.BUILDROOT_OUTPUT}}/images/zImage
+      - test -f {{.BUILDROOT_OUTPUT}}/images/rootfs.cpio
+      - test -f {{.BUILDROOT_OUTPUT}}/images/aspeed-ast2600-evb-nmi.dtb
 
   clean-qemu:
     desc: Clean QEMU build artifacts
