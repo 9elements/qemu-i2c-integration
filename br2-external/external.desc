@@ -1,0 +1,2 @@
+name: I2C_INTEGRATION
+desc: I2C Integration external tree for QEMU i2c chardev testing

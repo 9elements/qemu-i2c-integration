@@ -3,6 +3,9 @@ version: '3'
 vars:
   QEMU_DIR: qemu
   BUILDROOT_DIR: buildroot
+  BR2_EXTERNAL_PATH: "{{.ROOT_DIR}}/br2-external"
+  BUILDROOT_OUTPUT: "{{.BUILDROOT_DIR}}/output"
+  DEFCONFIG: aspeed_ast2600evb_i2c_defconfig
 
 tasks:
   init-submodules:
@@ -30,13 +33,37 @@ tasks:
     deps:
       - init-submodules
 
+  build-buildroot:
+    desc: Build Buildroot with BR2_EXTERNAL and custom defconfig
+    dir: "{{.BUILDROOT_DIR}}"
+    cmds:
+      - make BR2_EXTERNAL={{.BR2_EXTERNAL_PATH}} {{.DEFCONFIG}}
+      - make BR2_EXTERNAL={{.BR2_EXTERNAL_PATH}} -j$(nproc)
+    generates:
+      - "{{.BUILDROOT_OUTPUT}}/images/zImage"
+      - "{{.BUILDROOT_OUTPUT}}/images/rootfs.cpio"
+      - "{{.BUILDROOT_OUTPUT}}/images/aspeed-ast2600-evb.dtb"
+    deps:
+      - init-submodules
+    preconditions:
+      - test -d {{.BR2_EXTERNAL_PATH}}
+      - test -f {{.BR2_EXTERNAL_PATH}}/external.desc
+      - test -f {{.BR2_EXTERNAL_PATH}}/configs/{{.DEFCONFIG}}
+
   clean-qemu:
     desc: Clean QEMU build artifacts
     dir: "{{.QEMU_DIR}}"
     cmds:
       - rm -rf build
 
+  clean-buildroot:
+    desc: Clean Buildroot build artifacts
+    dir: "{{.BUILDROOT_DIR}}"
+    cmds:
+      - make clean
+
   clean:
     desc: Clean all build artifacts
     cmds:
       - task: clean-qemu
+      - task: clean-buildroot

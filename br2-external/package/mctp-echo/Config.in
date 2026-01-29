@@ -1,0 +1,6 @@
+config BR2_PACKAGE_MCTP_ECHO
+	bool "mctp-echo"
+	help
+	  Simple MCTP echo test application for i2c chardev testing.
+
+	  Currently prints a hello world message.
