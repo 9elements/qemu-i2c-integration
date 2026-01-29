@@ -1,0 +1,5 @@
+config BR2_PACKAGE_MCTP_INIT
+	bool "mctp-init"
+	help
+	  MCTP initialization script for setting up I2C interfaces
+	  and routing configuration at boot time.

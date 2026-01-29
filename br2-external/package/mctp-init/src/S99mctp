@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# MCTP initialization script
+# Sets up MCTP I2C interfaces with routing configuration
+#
+
+case "$1" in
+  start)
+	echo "Setting up MCTP I2C interfaces..."
+
+	# Configure mctpi2c1 (sender - EID 8)
+	mctp addr add 8 dev mctpi2c1
+	mctp link set mctpi2c1 up
+	echo "mctpi2c1: EID 8 configured"
+
+	# Configure mctpi2c2 (receiver - EID 9) - do this before adding neighbor!
+	#mctp addr add 9 dev mctpi2c2
+	#mctp link set mctpi2c2 up
+	#echo "mctpi2c2: EID 9 configured for receiving"
+
+	# Add neighbor routing from mctpi2c1 to reach EID 9 via I2C addr 0x20
+	mctp route add 9 via mctpi2c1
+	mctp neigh add 9 dev mctpi2c1 lladdr 0x20
+	echo "mctpi2c1: Added neighbor route to EID 9 at I2C addr 0x20"
+
+	echo "MCTP setup complete"
+	;;
+  stop)
+	echo "Stopping MCTP interfaces..."
+	mctp link set mctpi2c1 down 2>/dev/null || true
+	mctp link set mctpi2c2 down 2>/dev/null || true
+	;;
+  restart|reload)
+	"$0" stop
+	"$0" start
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?

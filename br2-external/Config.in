@@ -1,1 +1,2 @@
 source "$BR2_EXTERNAL_I2C_INTEGRATION_PATH/package/mctp-echo/Config.in"
+source "$BR2_EXTERNAL_I2C_INTEGRATION_PATH/package/mctp-init/Config.in"
