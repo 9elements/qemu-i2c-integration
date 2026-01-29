@@ -1,0 +1,8 @@
+[submodule "qemu-9e"]
+	path = qemu
+	url = git@github.com:9elements/qemu.git
+	branch = groenke/wip/i2c_chardev
+[submodule "buildroot-mynetz"]
+	path = buildroot
+	url = git@github.com:mynetz/buildroot.git
+	branch = feat/ast2600-nvme-mi

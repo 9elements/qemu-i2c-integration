@@ -1,0 +1,14 @@
+version: '3'
+
+vars:
+  QEMU_DIR: qemu
+  BUILDROOT_DIR: buildroot
+
+tasks:
+  init-submodules:
+    desc: Initialize git submodules with depth 1
+    cmds:
+      - git submodule update --init --depth 1
+    status:
+      - test -f {{.QEMU_DIR}}/README.rst
+      - test -f {{.BUILDROOT_DIR}}/README
