@@ -9,7 +9,7 @@
 #include <sys/socket.h>
 #include <linux/mctp.h>
 
-#define MCTP_TYPE 5
+#define MCTP_TYPE 1
 #define BUFFER_SIZE 4096
 
 /* Create and bind MCTP socket to given EID */

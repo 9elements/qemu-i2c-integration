@@ -81,6 +81,8 @@ tasks:
 
   run-qemu:
     desc: Run QEMU with Buildroot images for AST2600 EVB
+    vars:
+      TRACE_ARGS: '{{.TRACE_ARGS | default ""}}'
     cmds:
       - |
         {{.QEMU_DIR}}/build/qemu-system-arm \
@@ -89,10 +91,9 @@ tasks:
           -kernel {{.BUILDROOT_OUTPUT}}/images/zImage \
           -initrd {{.BUILDROOT_OUTPUT}}/images/rootfs.cpio \
           -dtb {{.BUILDROOT_OUTPUT}}/images/aspeed-ast2600-evb-nmi.dtb \
-          -chardev socket,path=vi2c_bus.sock,id=vi2c_bus1,server=on,wait=off \
-          -device chardev-i2c,bus=aspeed.i2c.bus.1,chardev=vi2c_bus1,address=0x20 \
-          -chardev socket,path=vi2c_bus.sock,id=vi2c_bus2,server=off \
-          -device chardev-i2c,bus=aspeed.i2c.bus.2,chardev=vi2c_bus2,address=0x10
+          -chardev socket,path=vi2c_bus.sock,id=vi2c_bus,server=on,wait=off \
+          -device chardev-i2c,bus=aspeed.i2c.bus.1,chardev=vi2c_bus,address=0x20 \
+          {{.TRACE_ARGS}}
     preconditions:
       - test -f {{.QEMU_DIR}}/build/qemu-system-arm
       - test -f {{.BUILDROOT_OUTPUT}}/images/zImage
@@ -102,23 +103,9 @@ tasks:
   run-qemu-debug:
     desc: Run QEMU with chardev_i2c trace debugging enabled
     cmds:
-      - |
-        {{.QEMU_DIR}}/build/qemu-system-arm \
-          -M ast2600-evb \
-          -nographic \
-          -kernel {{.BUILDROOT_OUTPUT}}/images/zImage \
-          -initrd {{.BUILDROOT_OUTPUT}}/images/rootfs.cpio \
-          -dtb {{.BUILDROOT_OUTPUT}}/images/aspeed-ast2600-evb-nmi.dtb \
-          -chardev socket,path=vi2c_bus.sock,id=vi2c_bus1,server=on,wait=off \
-          -device chardev-i2c,bus=aspeed.i2c.bus.1,chardev=vi2c_bus1,address=0x20 \
-          -chardev socket,path=vi2c_bus.sock,id=vi2c_bus2,server=off \
-          -device chardev-i2c,bus=aspeed.i2c.bus.2,chardev=vi2c_bus2,address=0x10 \
-          --trace 'chardev_i2c_*'
-    preconditions:
-      - test -f {{.QEMU_DIR}}/build/qemu-system-arm
-      - test -f {{.BUILDROOT_OUTPUT}}/images/zImage
-      - test -f {{.BUILDROOT_OUTPUT}}/images/rootfs.cpio
-      - test -f {{.BUILDROOT_OUTPUT}}/images/aspeed-ast2600-evb-nmi.dtb
+      - task: run-qemu
+        vars:
+          TRACE_ARGS: "--trace 'chardev_i2c_*'"
 
   clean-qemu:
     desc: Clean QEMU build artifacts
