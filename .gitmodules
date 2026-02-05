@@ -6,3 +6,6 @@
 	path = buildroot
 	url = git@github.com:mynetz/buildroot.git
 	branch = feat/ast2600-nvme-mi
+[submodule "host-mctp-i2c-tools"]
+	path = host-mctp-i2c-tools
+	url = git@github.com:embediver/i2c-qemu-chardev-mctp-tools.git

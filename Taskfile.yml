@@ -6,6 +6,7 @@ vars:
   BR2_EXTERNAL_PATH: "{{.ROOT_DIR}}/br2-external"
   BUILDROOT_OUTPUT: "{{.BUILDROOT_DIR}}/output"
   DEFCONFIG: aspeed_ast2600evb_i2c_defconfig
+  HOST_MCTP_I2C_TOOLS_DIR: host-mctp-i2c-tools
 
 tasks:
   init-submodules:
@@ -30,6 +31,20 @@ tasks:
       - "{{.QEMU_DIR}}/**/*.h"
     generates:
       - "{{.QEMU_DIR}}/build/qemu-system-arm"
+    deps:
+      - init-submodules
+
+  build-host-mctp-i2c-tools:
+    desc: Build host MCTP I2C tools (echo and initiator)
+    dir: "{{.HOST_MCTP_I2C_TOOLS_DIR}}"
+    cmds:
+      - cargo build --release
+    sources:
+      - "{{.HOST_MCTP_I2C_TOOLS_DIR}}/src/**/*.rs"
+      - "{{.HOST_MCTP_I2C_TOOLS_DIR}}/Cargo.toml"
+    generates:
+      - "{{.HOST_MCTP_I2C_TOOLS_DIR}}/target/release/echo"
+      - "{{.HOST_MCTP_I2C_TOOLS_DIR}}/target/release/initiator"
     deps:
       - init-submodules
 
