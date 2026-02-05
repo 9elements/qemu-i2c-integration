@@ -1,0 +1,53 @@
+#!/bin/sh
+# MCTP I2C Echo Test Application
+# Uses mctp-read and mctp-write to test MCTP communication
+
+SENDER_EID=8
+RECEIVER_EID=9
+
+echo "MCTP I2C Echo Test Application"
+echo "Sender EID: $SENDER_EID (mctpi2c1), Receiver EID: $RECEIVER_EID (mctpi2c2)"
+
+# Start receiver in background
+echo "[RECEIVER] Starting on EID $RECEIVER_EID, waiting for messages..."
+mctp-read -e $RECEIVER_EID > /tmp/mctp-echo-recv.txt &
+RECEIVER_PID=$!
+
+# Give receiver time to bind and listen
+sleep 2
+
+# Send message
+MESSAGE="Hello from EID $SENDER_EID via I2C!"
+echo "[SENDER] Bound to EID $SENDER_EID"
+echo "[SENDER] Sending message to EID $RECEIVER_EID via mctpi2c1 (I2C addr 0x20): '$MESSAGE'"
+
+echo -n "$MESSAGE" | mctp-write -e $SENDER_EID -d $RECEIVER_EID
+
+if [ $? -eq 0 ]; then
+    echo "[SENDER] Message sent successfully (${#MESSAGE} bytes)"
+else
+    echo "[SENDER] Failed to send message"
+    kill $RECEIVER_PID 2>/dev/null
+    rm -f /tmp/mctp-echo-recv.txt
+    exit 1
+fi
+
+# Wait for receiver to finish
+sleep 1
+kill $RECEIVER_PID 2>/dev/null
+wait $RECEIVER_PID 2>/dev/null
+
+# Display received message
+if [ -f /tmp/mctp-echo-recv.txt ]; then
+    RECV_MSG=$(cat /tmp/mctp-echo-recv.txt)
+    RECV_LEN=${#RECV_MSG}
+    echo "[RECEIVER] Got message from EID $SENDER_EID ($RECV_LEN bytes): '$RECV_MSG'"
+    echo "[RECEIVER] ✓ Echo test successful!"
+    rm -f /tmp/mctp-echo-recv.txt
+else
+    echo "[RECEIVER] No message received"
+    exit 1
+fi
+
+echo ""
+echo "MCTP I2C Echo test completed."

@@ -15,6 +15,8 @@ define MCTP_ECHO_BUILD_CMDS
 endef
 
 define MCTP_ECHO_INSTALL_TARGET_CMDS
+	$(INSTALL) -D -m 0755 $(@D)/mctp-read $(TARGET_DIR)/usr/bin/mctp-read
+	$(INSTALL) -D -m 0755 $(@D)/mctp-write $(TARGET_DIR)/usr/bin/mctp-write
 	$(INSTALL) -D -m 0755 $(@D)/mctp-echo $(TARGET_DIR)/usr/bin/mctp-echo
 endef
 
