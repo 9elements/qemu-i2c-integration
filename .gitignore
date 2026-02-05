@@ -1,1 +1,8 @@
+# Build artifacts
 /.task/
+
+# Intermidiate and test files
+vi2c_bus.sock
+
+# IDE stuff
+.idea/editor.xml
