@@ -11,10 +11,55 @@ support an external application and also allow MCTP over I2C communication.
 While the implementation in QEMU should be generic enough. The integration focuses
 on testing/developing this with MCTP via I2C in mind.
 
-The `task run-qemu` command will start a qemu that will loop a i2c bus into itself
-via a chardev. The internal I2C bus 1 will be connected to the bus 2. With two
-different devices.
-This should allow an echo communication.
+## Usage
+
+The project uses [Task](https://taskfile.dev/) for build automation. Available tasks can be viewed with `task --list`.
+
+### Running a Test Cycle
+
+To test the MCTP over I2C communication:
+
+1. **Start the echo server** (host side):
+   ```bash
+   task test-echo
+   ```
+   This starts the host MCTP I2C echo server that listens on a Unix socket (`vi2c_bus.sock`).
+
+2. **Run QEMU** (in another terminal):
+   ```bash
+   task run-qemu
+   ```
+   This starts QEMU with the AST2600 EVB configuration and connects to the echo server via the chardev.
+
+3. **Connect to the serial console** (in another terminal):
+   ```bash
+   task run-serial
+   ```
+   This connects to the QEMU serial console.
+
+4. **Run the MCTP echo test** inside QEMU:
+   - Login as `root` (no password required)
+   - Run the MCTP echo application:
+     ```bash
+     mctp-echo
+     ```
+
+### Other Useful Tasks
+
+- **Connect to QEMU monitor**:
+  ```bash
+  task run-monitor
+  ```
+
+- **Run QEMU with debug tracing** (chardev_i2c traces):
+  ```bash
+  task run-qemu-debug
+  ```
+
+- **Rebuild custom packages** (mctp-echo, mctp-init):
+  ```bash
+  task rebuild-packages
+  ```
 
 ## Submodules
 
@@ -22,11 +67,7 @@ This project uses the following submodules:
 
 - **QEMU**: `git@github.com:9elements/qemu.git` (branch: `groenke/wip/i2c_chardev`)
 - **Buildroot**: `git@github.com:mynetz/buildroot.git` (branch: `feat/ast2600-nvme-mi`)
-
-To initialize the submodules after checkout:
-```bash
-task init-submodules
-```
+- **Host MCTP I2C Tools**: Rust-based tools for testing MCTP over I2C (see `host-mctp-i2c-tools/`)
 
 ## Contents
 
@@ -36,33 +77,52 @@ This repository contains these components:
   (via `buildroot` submodule)
 - Tests and programs for the i2c chardev device for the host and target side
     - See `br2-external` for the buildroot external tree with custom packages
-    - No host programs for now
+    - Host tools in `host-mctp-i2c-tools/` (echo and initiator)
 - Documentation and examples for using the i2c chardev device
 
 ## Building
 
-The project uses [Task](https://taskfile.dev/) for build automation.
+### Prerequisites
 
-### Quick Start
+- [Task](https://taskfile.dev/) - Build automation tool
+- Rust toolchain (for host MCTP I2C tools)
+- Standard build tools (gcc, make, etc.)
+- QEMU build dependencies
 
-```bash
-# 1. Initialize submodules
-task init-submodules
+### Build Steps
 
-# 2. Build QEMU
-task build-qemu
+1. **Initialize submodules**:
+   ```bash
+   task init-submodules
+   ```
 
-# 3. Build Buildroot
-task build-buildroot
+2. **Build QEMU**:
+   ```bash
+   task build-qemu
+   ```
+   Builds `qemu-system-arm` with the I2C chardev device support.
 
-# 4. Run QEMU
-task run-qemu
-```
+3. **Build Host MCTP I2C Tools**:
+   ```bash
+   task build-host-mctp-i2c-tools
+   ```
+   Builds the `echo` and `initiator` binaries in `host-mctp-i2c-tools/target/release/`.
 
-Note: Building QEMU and Buildroot can take a while. 10-20 minutes on a fast machine. There
-is an option to provide a pre-build toolchain for Buildroot. This is currently missing in
-this PoC. The already prebuild toolchain from Bootlin lacks the kernel headers.
-This is a problem for the MCTP tooling. Building all is a workaround for now.
+4. **Build Buildroot**:
+   ```bash
+   task build-buildroot
+   ```
+   Builds the Linux kernel, rootfs, and device tree for the AST2600 EVB target.
+
+**Note**: Building QEMU and Buildroot can take 10-20 minutes on a fast machine. The buildroot
+build includes building a complete toolchain as the prebuild toolchain from Bootlin lacks
+the kernel headers required for MCTP tooling.
+
+### Clean Targets
+
+- `task clean-qemu` - Clean QEMU build artifacts
+- `task clean-buildroot` - Clean Buildroot build artifacts
+- `task clean` - Clean all build artifacts
 
 ## BR2_EXTERNAL Structure
 

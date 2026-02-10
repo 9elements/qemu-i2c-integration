@@ -7,6 +7,7 @@ vars:
   BUILDROOT_OUTPUT: "{{.BUILDROOT_DIR}}/output"
   DEFCONFIG: aspeed_ast2600evb_i2c_defconfig
   HOST_MCTP_I2C_TOOLS_DIR: host-mctp-i2c-tools
+  VI2C_SOCKET: vi2c_bus.sock
 
 tasks:
   init-submodules:
@@ -91,7 +92,9 @@ tasks:
           -kernel {{.BUILDROOT_OUTPUT}}/images/zImage \
           -initrd {{.BUILDROOT_OUTPUT}}/images/rootfs.cpio \
           -dtb {{.BUILDROOT_OUTPUT}}/images/aspeed-ast2600-evb-nmi.dtb \
-          -chardev socket,path=vi2c_bus.sock,id=vi2c_bus,server=on,wait=off \
+          -serial unix:qemu-serial.sock,server=on,wait=off \
+          -monitor unix:qemu-monitor.sock,server=on,wait=off \
+          -chardev socket,path={{.VI2C_SOCKET}},id=vi2c_bus,server=off \
           -device chardev-i2c,bus=aspeed.i2c.bus.1,chardev=vi2c_bus,address=0x20 \
           {{.TRACE_ARGS}}
     preconditions:
@@ -101,11 +104,33 @@ tasks:
       - test -f {{.BUILDROOT_OUTPUT}}/images/aspeed-ast2600-evb-nmi.dtb
 
   run-qemu-debug:
-    desc: Run QEMU with chardev_i2c trace debugging enabled
+    desc: Run QEMU with chardev_i2c trace debugging enabled (traces to stderr)
     cmds:
       - task: run-qemu
         vars:
           TRACE_ARGS: "--trace 'chardev_i2c_*'"
+
+  run-serial:
+    desc: Connect to QEMU serial console
+    cmds:
+      - socat unix-connect:qemu-serial.sock stdio,raw,echo=0
+    preconditions:
+      - test -S qemu-serial.sock
+
+  run-monitor:
+    desc: Connect to QEMU monitor console
+    cmds:
+      - socat unix-connect:qemu-monitor.sock stdio
+    preconditions:
+      - test -S qemu-monitor.sock
+
+  test-echo:
+    desc: Run echo test using the host MCTP I2C tools
+    cmds:
+      - UNIX_SOCKET={{.VI2C_SOCKET}} {{.HOST_MCTP_I2C_TOOLS_DIR}}/target/release/echo
+      - rm -f {{.VI2C_SOCKET}}
+    deps:
+      - build-host-mctp-i2c-tools
 
   clean-qemu:
     desc: Clean QEMU build artifacts
